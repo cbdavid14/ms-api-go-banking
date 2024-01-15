@@ -6,6 +6,7 @@ import (
 	"github.com/cbdavid14/ms-api-go-banking/logger"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
+	"os"
 	"time"
 )
 
@@ -14,7 +15,14 @@ type CustomerRepositoryDb struct {
 }
 
 func NewCustomerRepositoryDb() CustomerRepositoryDb {
-	client, err := sqlx.Open("mysql", "root:password@/banking")
+	dbUser := os.Getenv("DB_USER")
+	dbPass := os.Getenv("DB_PASS")
+	dbAddr := os.Getenv("DB_ADDR")
+	dbPort := os.Getenv("DB_PORT")
+	dbName := os.Getenv("DB_NAME")
+
+	dataSource := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", dbUser, dbPass, dbAddr, dbPort, dbName)
+	client, err := sqlx.Open("mysql", dataSource)
 	if err != nil {
 		logger.Error("Error connect bd " + err.Error())
 	}
