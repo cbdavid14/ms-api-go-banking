@@ -25,8 +25,6 @@ func (s DefaultCustomerService) GetAllCustomers(status string) ([]domain.Custome
 		status = "1"
 	case "inactive":
 		status = "0"
-	case "":
-		return nil, errs.NewValidationError("invalid parameter status")
 	default:
 		status = "2"
 	}
