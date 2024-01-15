@@ -20,3 +20,14 @@ Hexagonal Architecture
 - The third principle is that the boundaries are isolated with interfaces.
 
 ![img.png](img/hexagonal-diagrman2.png)
+
+
+## Routes
+- Role Admin
+  - Get All Customer GET /customers
+  - Get Customer By Id GET /customers/{customer_id}
+  - Create new Account POST /customers/{customer_id}/accounts
+  - Make a Transaction POST /customers/{customer_id}/accounts/{account_id}/transactions
+- Role User
+  - Get Customer By Id GET /customers/{customer_id}
+  - Make a Transaction POST /customers/{customer_id}/accounts/{account_id}/transactions

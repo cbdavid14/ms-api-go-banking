@@ -30,3 +30,27 @@ func (ch AccountHandler) save(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 }
+
+func (ch AccountHandler) makeTransaction(w http.ResponseWriter, r *http.Request) {
+	//get params from path
+	vars := mux.Vars(r)
+	customerId, _ := strconv.Atoi(vars["customer_id"])
+	accountId, _ := strconv.Atoi(vars["account_id"])
+
+	//decode incoming request
+	var req dto.TransactionRequest
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		writeResponse(w, http.StatusBadRequest, err.Error())
+	} else {
+		req.CustomerId = customerId
+		req.AccountId = accountId
+		response, appError := ch.service.MakeTransaction(req)
+		if appError != nil {
+			writeResponse(w, appError.Code, appError.AsMessage())
+		} else {
+			writeResponse(w, http.StatusOK, response)
+		}
+	}
+
+}

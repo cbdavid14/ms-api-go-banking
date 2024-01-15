@@ -36,6 +36,9 @@ func Start() {
 	router.HandleFunc("/customers", ch.getAllCustomer).Methods(http.MethodGet)
 	router.HandleFunc("/customers/{customer_id:[0-9]+}", ch.getCustomerById).Methods(http.MethodGet)
 	router.HandleFunc("/customers/{customer_id:[0-9]+}/account", ah.save).Methods(http.MethodPost)
+	router.
+		HandleFunc("/customers/{customer_id:[0-9]+}/account/{account_id:[0-9]+}/transaction", ah.makeTransaction).
+		Methods(http.MethodPost)
 
 	//starting server
 	address := os.Getenv("SERVER_ADDRESS")
@@ -50,7 +53,7 @@ func getClientDb() *sqlx.DB {
 	dbPort := os.Getenv("DB_PORT")
 	dbName := os.Getenv("DB_NAME")
 
-	dataSource := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", dbUser, dbPass, dbAddr, dbPort, dbName)
+	dataSource := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true", dbUser, dbPass, dbAddr, dbPort, dbName)
 	client, err := sqlx.Open("mysql", dataSource)
 	if err != nil {
 		logger.Error("Error connect bd " + err.Error())
