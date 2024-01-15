@@ -2,12 +2,13 @@ package service
 
 import (
 	"github.com/cbdavid14/ms-api-go-banking/domain"
+	"github.com/cbdavid14/ms-api-go-banking/dto"
 	"github.com/cbdavid14/ms-api-go-banking/errs"
 )
 
 type CustomerService interface {
-	GetAllCustomers(string) ([]domain.Customer, *errs.AppError)
-	GetCustomerById(int) (*domain.Customer, *errs.AppError)
+	GetAllCustomers(string) ([]dto.CustomerResponse, *errs.AppError)
+	GetCustomerById(int) (*dto.CustomerResponse, *errs.AppError)
 }
 
 type DefaultCustomerService struct {
@@ -18,7 +19,7 @@ func NewCustomerService(repository domain.CustomerRepository) DefaultCustomerSer
 	return DefaultCustomerService{repository}
 }
 
-func (s DefaultCustomerService) GetAllCustomers(status string) ([]domain.Customer, *errs.AppError) {
+func (s DefaultCustomerService) GetAllCustomers(status string) ([]dto.CustomerResponse, *errs.AppError) {
 
 	switch status {
 	case "active":
@@ -29,9 +30,23 @@ func (s DefaultCustomerService) GetAllCustomers(status string) ([]domain.Custome
 		status = "2"
 	}
 
-	return s.repo.FindAll(status)
+	Customers, err := s.repo.FindAll(status)
+	if err != nil {
+		return nil, err
+	}
+	response := make([]dto.CustomerResponse, 0)
+	for _, c := range Customers {
+		response = append(response, c.ToDto())
+	}
+
+	return response, nil
 }
 
-func (s DefaultCustomerService) GetCustomerById(customerId int) (*domain.Customer, *errs.AppError) {
-	return s.repo.FindById(customerId)
+func (s DefaultCustomerService) GetCustomerById(customerId int) (*dto.CustomerResponse, *errs.AppError) {
+	customer, err := s.repo.FindById(customerId)
+	if err != nil {
+		return nil, err
+	}
+	response := customer.ToDto()
+	return &response, nil
 }
