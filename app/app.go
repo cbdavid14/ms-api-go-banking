@@ -3,19 +3,18 @@ package app
 import (
 	"fmt"
 	"github.com/cbdavid14/ms-api-go-banking/domain"
+	"github.com/cbdavid14/ms-api-go-banking/logger"
 	"github.com/cbdavid14/ms-api-go-banking/service"
 	"github.com/gorilla/mux"
+	"github.com/jmoiron/sqlx"
 	"github.com/joho/godotenv"
 	"log"
 	"net/http"
 	"os"
+	"time"
 )
 
 func SanityCheck() {
-	/*if os.Getenv("SERVER_ADDRESS") == "" ||
-		os.Getenv("SERVER_PORT") == "" {
-		log.Fatal("Environment variable not defined...")
-	}*/
 	err := godotenv.Load(".env")
 	if err != nil {
 		log.Fatal("Error loading .env file")
@@ -24,18 +23,41 @@ func SanityCheck() {
 
 func Start() {
 	SanityCheck()
-
 	router := mux.NewRouter()
 
+	client := getClientDb()
+	customerRepositoryDB := domain.NewCustomerRepositoryDb(client)
+	accountRepositoryDB := domain.NewAccountRepositoryDb(client)
 	//wiring instances
-	ch := CustomerHandler{service.NewCustomerService(domain.NewCustomerRepositoryDb())}
+	ch := CustomerHandler{service.NewCustomerService(customerRepositoryDB)}
+	ah := AccountHandler{service.NewAccountService(accountRepositoryDB)}
 
 	//define routes
 	router.HandleFunc("/customers", ch.getAllCustomer).Methods(http.MethodGet)
 	router.HandleFunc("/customers/{customer_id:[0-9]+}", ch.getCustomerById).Methods(http.MethodGet)
+	router.HandleFunc("/customers/{customer_id:[0-9]+}/account", ah.save).Methods(http.MethodPost)
 
 	//starting server
 	address := os.Getenv("SERVER_ADDRESS")
 	port := os.Getenv("SERVER_PORT")
 	log.Fatal(http.ListenAndServe(fmt.Sprintf("%s:%s", address, port), router))
+}
+
+func getClientDb() *sqlx.DB {
+	dbUser := os.Getenv("DB_USER")
+	dbPass := os.Getenv("DB_PASS")
+	dbAddr := os.Getenv("DB_ADDR")
+	dbPort := os.Getenv("DB_PORT")
+	dbName := os.Getenv("DB_NAME")
+
+	dataSource := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", dbUser, dbPass, dbAddr, dbPort, dbName)
+	client, err := sqlx.Open("mysql", dataSource)
+	if err != nil {
+		logger.Error("Error connect bd " + err.Error())
+	}
+	// See "Important settings" section.
+	client.SetConnMaxLifetime(time.Minute * 3)
+	client.SetMaxOpenConns(10)
+	client.SetMaxIdleConns(10)
+	return client
 }
