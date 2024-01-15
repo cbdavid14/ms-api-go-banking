@@ -1,32 +1,24 @@
 package app
 
 import (
-	"fmt"
+	"github.com/cbdavid14/ms-api-go-banking/domain"
+	"github.com/cbdavid14/ms-api-go-banking/service"
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
 )
 
 func Start() {
-	//define a route
-	//mux := http.NewServerMux()
+
 	router := mux.NewRouter()
 
-	//define the handlers
-	router.HandleFunc("/greet", greet).Methods(http.MethodGet)
-	router.HandleFunc("/users", getAllUsers).Methods(http.MethodGet)
-	router.HandleFunc("/users", createUser).Methods(http.MethodPost)
+	//wiring instances
+	ch := CustomerHandler{service.NewCustomerService(domain.NewCustomerRepositoryDb())}
 
-	router.HandleFunc("/users/{id:[0-9]+}", getUserById).Methods(http.MethodGet)
-	//start the server
+	//define routes
+	router.HandleFunc("/customers", ch.getAllCustomer).Methods(http.MethodGet)
+	router.HandleFunc("/customers/{customer_id:[0-9]+}", ch.getCustomerById).Methods(http.MethodGet)
+
+	//starting server
 	log.Fatal(http.ListenAndServe(":8000", router))
-}
-
-func createUser(writer http.ResponseWriter, request *http.Request) {
-	fmt.Fprint(writer, "Post request received")
-}
-
-func getUserById(writer http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	fmt.Fprint(writer, vars["id"])
 }
