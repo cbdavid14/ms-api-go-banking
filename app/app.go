@@ -12,6 +12,8 @@ import (
 	"net/http"
 	"os"
 	"time"
+
+	_ "github.com/go-sql-driver/mysql"
 )
 
 func SanityCheck() {
@@ -33,12 +35,25 @@ func Start() {
 	ah := AccountHandler{service.NewAccountService(accountRepositoryDB)}
 
 	//define routes
-	router.HandleFunc("/customers", ch.getAllCustomer).Methods(http.MethodGet)
-	router.HandleFunc("/customers/{customer_id:[0-9]+}", ch.getCustomerById).Methods(http.MethodGet)
-	router.HandleFunc("/customers/{customer_id:[0-9]+}/account", ah.save).Methods(http.MethodPost)
+	router.
+		HandleFunc("/customers", ch.getAllCustomer).
+		Methods(http.MethodGet).
+		Name("GetAllCustomer")
+	router.
+		HandleFunc("/customers/{customer_id:[0-9]+}", ch.getCustomerById).
+		Methods(http.MethodGet).
+		Name("GetCustomer")
+	router.
+		HandleFunc("/customers/{customer_id:[0-9]+}/account", ah.save).
+		Methods(http.MethodPost).
+		Name("NewAccount")
 	router.
 		HandleFunc("/customers/{customer_id:[0-9]+}/account/{account_id:[0-9]+}/transaction", ah.makeTransaction).
-		Methods(http.MethodPost)
+		Methods(http.MethodPost).
+		Name("NewTransaction")
+
+	am := AuthMiddleware{domain.NewAuthRepository()}
+	router.Use(am.authorizationHandler())
 
 	//starting server
 	address := os.Getenv("SERVER_ADDRESS")
